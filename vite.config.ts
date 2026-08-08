@@ -4,6 +4,6 @@ import tailwindcss from '@tailwindcss/vite'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: process.env.GITHUB_PAGES ? '/shrimp-website/' : '/',
+  base: process.env.GITHUB_PAGES ? '/mayco-website/' : '/',
   plugins: [react(), tailwindcss()],
 })
