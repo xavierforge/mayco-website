@@ -2,6 +2,7 @@
 
 插畫家「美可女子 Mayco」的品牌網站。首頁是可拖曳的物理樂園（Welcome to my zoo.），
 另有三個內容分頁：美可的故事、品牌履歷、經典商品（美可雜貨店）。
+品牌調性參考創作者的 portaly（https://portaly.cc/mayco）。
 
 ## 開發
 
@@ -13,6 +14,15 @@ npm run lint
 ```
 
 技術棧：Vite + React + TypeScript（strict）、Tailwind CSS v4、react-router-dom、motion、matter-js。
+
+## 部署
+
+- 線上網址：https://mayco-studio.github.io/mayco-website/
+- repo：https://github.com/mayco-studio/mayco-website
+- 部署方式：push 到 main 即由 GitHub Actions（`.github/workflows/deploy.yml`）自動建置部署，約一兩分鐘生效
+- base path 機制：CI 帶 `GITHUB_PAGES=true` 時 vite base 為 `/mayco-website/`，本機開發不帶時為 `/`；BrowserRouter 的 basename 吃 `import.meta.env.BASE_URL` 所以兩邊通用
+- SPA fallback：workflow 會把 `index.html` 複製成 `404.html`，深層路由（`/story`、`/pixel` 等）直開時 HTTP 狀態碼是 404 但內容正常，是 GitHub Pages 的已知行為
+- 免費方案限制：Pages 需 public repo；就算付費轉私有，發佈的網站仍是公開的（真正鎖站需 Enterprise 或改用 Cloudflare Pages + Access）
 
 ## 物理樂園
 
@@ -62,3 +72,7 @@ emoji／圖片／文字先畫到 24 格的小畫布，再用 `imageSmoothingEnab
 | `src/data/products.ts` | 真實商品資料，以及 `shipping.ctaUrl`（實際的 7-11 賣貨便賣場連結，目前暫指向 portaly 總入口） |
 
 `src/data/site.ts` 裡的聯絡資訊（email / Instagram / LINE / portaly）已是真實資料。
+
+## 已知小問題
+
+- 390px 等窄視窗下，像素小鎮的標題圖（canvas 產生、寬度固定）會超出畫面被裁切；修法方向是窄視窗時把 pixelate 的放大倍率降一級
