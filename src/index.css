@@ -1,0 +1,374 @@
+@import "tailwindcss";
+
+@theme {
+  /* 品牌色：奶油底 + 主橘（太陽 ☀ 的暖色系） */
+  --color-cream: #faf6ef;
+  --color-cream-deep: #f3ece0;
+  --color-mayco: #e8622d;
+  --color-mayco-soft: #f28b5c;
+  --color-sun: #f2b544;
+
+  --font-sans: "Noto Sans TC", -apple-system, "PingFang TC", "Microsoft JhengHei",
+    sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-cream);
+  color: #44403c; /* stone-700 */
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+  overflow-x: hidden;
+}
+
+@utility sticker {
+  /* 貼紙感：白色粗框 + 柔和陰影 */
+  background-color: #fff;
+  border: 3px solid #fff;
+  border-radius: var(--radius-2xl);
+  box-shadow:
+    0 2px 0 rgba(120, 80, 40, 0.06),
+    0 10px 24px -12px rgba(120, 80, 40, 0.35);
+}
+
+@utility title-pop {
+  text-shadow:
+    3px 3px 0 #fff,
+    6px 6px 0 rgba(232, 98, 45, 0.15);
+}
+
+/* ==========================================================================
+   手繪逐格動畫（模擬原站的 GIF 彩蛋）
+
+   關鍵原理：GIF 的味道來自「低幀率逐格跳動」，不是平滑補間。
+   所以底下每一個動畫都用 steps(1, end)：兩個 keyframe 之間完全不內插，
+   時間到才「啪」地跳到下一格。每個 cycle 切成 3~4 格、cycle 長度 0.6~0.9s，
+   換算約 3~6 fps，就是手繪 boiling 的抖動感。
+
+   ⚠️ 千萬不要把 steps(1, end) 換成 ease / linear，一換就變成平滑補間，
+   GIF 感會整個消失。之後換成真的 GIF 素材時，這整段可以直接拿掉。
+   ========================================================================== */
+
+/* --- 探頭動物：出場／退場（連淡入淡出都是跳格的，不是平滑漸變）--- */
+@keyframes critter-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.86);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes critter-out {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.critter {
+  /* 淡入 300ms → 停留 2500ms → 淡出 400ms，兩段都用 steps 切成離散的透明度階梯 */
+  animation:
+    critter-in 0.3s steps(3, end) both,
+    critter-out 0.4s steps(4, end) 2.8s both;
+}
+
+/* --- 探頭動物：四種逐格動作變體 --- */
+
+/* 變體 1「wiggle」搖頭晃腦：左右交替傾斜 ±5°，同時 x 位移 ±2px。0.72s / 4 格 ≈ 5.6fps */
+@keyframes critter-wiggle {
+  0% {
+    transform: translateX(-2px) rotate(-5deg);
+  }
+  25% {
+    transform: translateX(2px) rotate(5deg);
+  }
+  50% {
+    transform: translateX(-2px) rotate(-3deg);
+  }
+  75% {
+    transform: translateX(2px) translateY(-2px) rotate(4deg);
+  }
+}
+
+/* 變體 2「bounce」彈跳：y 位移 0 / -8px，落地那格用 scaleX 壓扁做 squash。0.68s / 4 格 ≈ 5.9fps */
+@keyframes critter-bounce {
+  0% {
+    transform: translateY(0) scale(1, 1);
+  }
+  25% {
+    transform: translateY(-8px) scale(0.95, 1.05);
+  }
+  50% {
+    transform: translateY(0) scale(1.05, 0.95);
+  }
+  75% {
+    transform: translateY(-4px) scale(1, 1);
+  }
+}
+
+/* 變體 3「peek」探頭：往畫面中間探出去再縮回來，方向由 --dir 決定（左側 +1、右側 -1）。
+   0.8s / 4 格 = 5fps */
+@keyframes critter-peek {
+  0% {
+    transform: translateX(calc(var(--dir) * -6px)) rotate(calc(var(--dir) * -8deg));
+  }
+  25% {
+    transform: translateX(calc(var(--dir) * 4px)) rotate(calc(var(--dir) * 6deg));
+  }
+  50% {
+    transform: translateX(calc(var(--dir) * 6px)) rotate(calc(var(--dir) * 10deg));
+  }
+  75% {
+    transform: translateX(calc(var(--dir) * 2px)) rotate(calc(var(--dir) * 4deg));
+  }
+}
+
+/* 變體 4「shiver」原地發抖：小幅縮放 + 微轉，最安靜的一種。0.6s / 3 格 = 5fps */
+@keyframes critter-shiver {
+  0% {
+    transform: scale(1) rotate(-2deg);
+  }
+  33.333% {
+    transform: scale(1.04) rotate(3deg);
+  }
+  66.667% {
+    transform: scale(0.98) rotate(-3deg);
+  }
+}
+
+.critter-wiggle {
+  animation: critter-wiggle 0.72s steps(1, end) infinite;
+}
+.critter-bounce {
+  animation: critter-bounce 0.68s steps(1, end) infinite;
+}
+.critter-peek {
+  animation: critter-peek 0.8s steps(1, end) infinite;
+}
+.critter-shiver {
+  animation: critter-shiver 0.6s steps(1, end) infinite;
+}
+
+/* --- 標題輪盤：常態微搖 5 / 大彈跳 1 / 歪頭 1 --- */
+
+/* 常態：幅度小到不影響閱讀，只是讓標題「活著」。0.8s / 4 格 = 5fps */
+@keyframes title-idle {
+  0% {
+    transform: translateY(0) rotate(-0.6deg);
+  }
+  25% {
+    transform: translateY(-1px) rotate(0.6deg);
+  }
+  50% {
+    transform: translateY(0) rotate(0.4deg);
+  }
+  75% {
+    transform: translateY(-1px) rotate(-0.4deg);
+  }
+}
+
+/* 稀有：整塊往上彈，落地壓扁。0.72s / 4 格 ≈ 5.6fps */
+@keyframes title-jump {
+  0% {
+    transform: translateY(0) scale(1, 1);
+  }
+  25% {
+    transform: translateY(-14px) scale(0.97, 1.06);
+  }
+  50% {
+    transform: translateY(0) scale(1.06, 0.94);
+  }
+  75% {
+    transform: translateY(-5px) scale(1, 1);
+  }
+}
+
+/* 稀有：歪頭。傾斜到 ±5° 很明顯，但因為是整塊一起歪，字還是好讀。0.84s / 4 格 ≈ 4.8fps */
+@keyframes title-tilt {
+  0% {
+    transform: rotate(-5deg) translateX(-3px);
+  }
+  25% {
+    transform: rotate(-2deg) translateX(0);
+  }
+  50% {
+    transform: rotate(5deg) translateX(3px);
+  }
+  75% {
+    transform: rotate(2deg) translateX(0);
+  }
+}
+
+.title-idle {
+  animation: title-idle 0.8s steps(1, end) infinite;
+}
+.title-jump {
+  animation: title-jump 0.72s steps(1, end) infinite;
+}
+.title-tilt {
+  animation: title-tilt 0.84s steps(1, end) infinite;
+}
+
+/* --- 角落搖搖裝飾：比前面都慢，1.6s / 4 格 = 2.5fps，只是背景在呼吸 --- */
+@keyframes shaker-sway {
+  0% {
+    transform: rotate(-8deg) translateY(0);
+  }
+  25% {
+    transform: rotate(4deg) translateY(-3px);
+  }
+  50% {
+    transform: rotate(8deg) translateY(0);
+  }
+  75% {
+    transform: rotate(-4deg) translateY(-2px);
+  }
+}
+
+.shaker {
+  animation: shaker-sway 1.6s steps(1, end) infinite;
+}
+
+/* ==========================================================================
+   像素小鎮（/pixel，首頁的實驗版本）
+
+   所有色塊都是硬邊：漸層一律用 hard stop 或 repeating/conic gradient 做成
+   8px 格律的磁磚，絕不出現平滑漸層，否則像素感會被糊掉。
+   ========================================================================== */
+
+@utility pixelated {
+  image-rendering: pixelated;
+}
+
+/* 天空：三段硬切的色帶，不是漸層 */
+.pixel-sky {
+  background: linear-gradient(
+    to bottom,
+    #cfe3ea 0 42%,
+    #dceaee 42% 68%,
+    #ecdfc4 68% 100%
+  );
+}
+
+/* 地面草地：8px 一格的棋盤格磁磚 */
+.pixel-ground {
+  background-color: #bcc98f;
+  background-image: conic-gradient(
+    from 90deg at 50% 50%,
+    #bcc98f 0 25%,
+    #b3c185 0 50%,
+    #bcc98f 0 75%,
+    #b3c185 0
+  );
+  background-size: 16px 16px;
+}
+
+/* 路：同樣的格律，換一組土色 */
+.pixel-path {
+  background-color: #d9c69a;
+  background-image: conic-gradient(
+    from 90deg at 50% 50%,
+    #d9c69a 0 25%,
+    #d0bb8d 0 50%,
+    #d9c69a 0 75%,
+    #d0bb8d 0
+  );
+  background-size: 16px 16px;
+}
+
+/* 地平線的接縫：一排 8px 方塊，讓草地與遠景之間有鋸齒感 */
+.pixel-seam {
+  background-image: repeating-linear-gradient(
+    90deg,
+    #a9b87b 0 8px,
+    #bcc98f 8px 16px
+  );
+}
+
+/* 8-bit 方框：方角、粗邊、硬陰影，沒有圓角也沒有柔邊 */
+@utility pixel-panel {
+  background-color: #fffdf7;
+  border: 4px solid #44403c;
+  border-radius: 0;
+  box-shadow: 6px 6px 0 rgba(68, 64, 60, 0.25);
+}
+
+/* 對話框：pixel-panel 加一個方形的小尖角 */
+.pixel-bubble::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -14px;
+  width: 10px;
+  height: 10px;
+  margin-left: -5px;
+  background-color: #fffdf7;
+  border-right: 4px solid #44403c;
+  border-bottom: 4px solid #44403c;
+}
+
+/* 雲：非常慢的逐格飄移，一樣是 steps() */
+@keyframes pixel-drift {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(6px);
+  }
+  50% {
+    transform: translateX(12px);
+  }
+  75% {
+    transform: translateX(6px);
+  }
+}
+
+.pixel-cloud {
+  animation: pixel-drift 4.8s steps(1, end) infinite;
+}
+
+/* 對話框彈出：兩格就到位，8-bit 視窗那種「啪」地出現 */
+@keyframes pixel-pop {
+  0% {
+    transform: translate(-50%, 6px) scale(0.7);
+    opacity: 0;
+  }
+  50% {
+    transform: translate(-50%, 0) scale(1.06);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, 0) scale(1);
+    opacity: 1;
+  }
+}
+
+.pixel-pop {
+  animation: pixel-pop 0.18s steps(1, end) both;
+}
+
+/* 使用者要求減少動態時，全站這幾組動畫一律停掉
+   （探頭動物連生成都會被關掉、小鎮居民會站著不動，見各自的元件） */
+@media (prefers-reduced-motion: reduce) {
+  .critter,
+  .critter-wiggle,
+  .critter-bounce,
+  .critter-peek,
+  .critter-shiver,
+  .title-idle,
+  .title-jump,
+  .title-tilt,
+  .shaker,
+  .pixel-cloud,
+  .pixel-pop {
+    animation: none !important;
+  }
+}
