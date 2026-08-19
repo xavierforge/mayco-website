@@ -1,15 +1,20 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useReducedMotion } from "motion/react";
 import { PixelSprite } from "./PixelSprite";
 import { usePixelText } from "../../hooks/usePixelArt";
 import { useTitleRoulette } from "../../hooks/useTitleRoulette";
 import { useApartmentDoors, type DoorPhase } from "../../hooks/useApartmentDoors";
 import { useCurrentTheme } from "../../hooks/useTheme";
 import {
+  CLOSET_ID,
   apartmentClouds,
   apartmentFloors,
   apartmentIntro,
   apartmentUnits,
-  streetProps,
+  costumeImages,
+  frogImage,
+  streetArt,
+  walkSprites,
   type ApartmentFloor,
   type ApartmentUnit,
 } from "../../data/apartment";
@@ -40,8 +45,6 @@ const DOOR_H = 22;
 /** 閣樓老虎窗門：小一號 */
 const ATTIC_DOOR_W = 18;
 const ATTIC_DOOR_H = 20;
-/** 門牌（掛在門的石楣上方） */
-const PLAQUE_H = 4;
 /** 樓層分隔帶：每層底部一條不同色的磚帶 */
 const BELT_H = 2;
 /** 1F 大廳層：只有公寓大門，不住人 */
@@ -60,7 +63,7 @@ const UNIT_W = WINDOW_COL_W + GAP + DOOR_COL_W;
 const CENTER_W = 20;
 const BUILDING_W = PILLAR + UNIT_W + CENTER_W + UNIT_W + PILLAR;
 /**
- * 每層樓高。門（22）加石楣（2）加門牌（4）之後上面還留 1 格磚牆、
+ * 每層樓高。門（22）加石楣（2）之後上面還留 5 格磚牆、
  * 腳下踩 3 格（分隔帶 2 格＋1 格磚，門不會直接踩在分隔帶上） —— 一層樓要有頭頂空間，看起來才真的是一層樓。
  */
 const UNIT_H = 32;
@@ -78,6 +81,8 @@ const BASE_H = 4;
 const STREET_H = 11;
 /** 住戶 sprite 壓成幾格見方。比門洞窄，半開的時候才看得出是在門後探頭 */
 const RESIDENT_BOX = 18;
+/** 屋頂青蛙的高度（格） */
+const FROG_H = 9;
 
 /** 中央柱的左緣（格） */
 const CENTER_LEFT = PILLAR + UNIT_W;
@@ -213,7 +218,7 @@ function Door({ unit, phase, displayScale: s, attic = false }: DoorProps) {
   const { resident } = unit;
   const doorW = attic ? ATTIC_DOOR_W : DOOR_W;
   const doorH = attic ? ATTIC_DOOR_H : DOOR_H;
-  const spriteBox = doorW - 4;
+  const spriteBox = doorW - 2;
   const open = phase === "open";
   const peek = phase === "peek";
   const crack = phase === "crack";
@@ -235,12 +240,21 @@ function Door({ unit, phase, displayScale: s, attic = false }: DoorProps) {
             style={{ transform: `translateX(calc(-50% + ${shift}px))` }}
           >
             <span className={`block ${peek ? "apt-bob" : ""} ${crack ? "apt-spy" : ""}`}>
-              <PixelSprite
-                emoji={resident.emoji}
-                img={resident.img}
-                box={spriteBox}
-                displayScale={s}
-              />
+              {/* 有真素材就直接縮小顯示（保留手繪貼紙的解析度），
+                  emoji 佔位的才走像素化 —— 貼紙角色住在像素房子裡，這是刻意的混搭 */}
+              {resident.img ? (
+                <img
+                  src={resident.img}
+                  alt=""
+                  draggable={false}
+                  /* max-w-none：preflight 的 img { max-width: 100% } 會在窄門洞裡
+                     掐住寬度、高度又被固定，圖就被直向拉長 */
+                  className="block max-w-none"
+                  style={{ height: (doorH - 1) * s, width: "auto" }}
+                />
+              ) : (
+                <PixelSprite emoji={resident.emoji} box={spriteBox} displayScale={s} />
+              )}
             </span>
           </div>
         )}
@@ -268,26 +282,12 @@ function Door({ unit, phase, displayScale: s, attic = false }: DoorProps) {
       {/* 敲門中：門上面跳出「叩叩叩」 */}
       {phase === "knocking" && (
         <span
-          className="apt-knock-text absolute left-1/2 z-20 text-[11px] font-black text-stone-600"
+          className="apt-knock-text absolute left-1/2 z-20 whitespace-nowrap bg-ink px-1.5 py-0.5 text-[11px] font-black text-milk"
           style={{ bottom: doorH * s + 2 }}
         >
           叩叩叩
         </span>
       )}
-    </div>
-  );
-}
-
-/** 門牌：只有編號（1F-1 這種），掛在門的石楣上方。住戶是誰，敲門才知道 */
-function Plaque({ unit, s }: { unit: ApartmentUnit; s: number }) {
-  return (
-    <div
-      className="apt-plaque flex items-center justify-center leading-none"
-      style={{ minWidth: 10 * s, height: PLAQUE_H * s, padding: "0 4px" }}
-    >
-      <span className="text-[9px] font-black tracking-wider whitespace-nowrap text-stone-500">
-        {unit.label}
-      </span>
     </div>
   );
 }
@@ -325,7 +325,6 @@ function UnitCol({ unit, phase, side, displayScale: s, onKnock }: UnitColProps) 
   );
   const doorCol = (
     <div className="flex flex-col items-center">
-      <Plaque unit={unit} s={s} />
       <div className="apt-stone" style={{ width: (DOOR_W + 4) * s, height: 2 * s }} />
       <Door unit={unit} phase={phase} displayScale={s} />
     </div>
@@ -412,7 +411,6 @@ function AtticRow({
     <div className="apt-slate relative" style={{ height: ATTIC_H * s }}>
       {/* 老虎窗（dormer）：門牌 + 往上收的尖頂石帽 + 上半玻璃的小門 */}
       <div className="absolute bottom-0 left-1/2 flex -translate-x-1/2 flex-col items-center">
-        <Plaque unit={unit} s={s} />
         <div className="apt-stone" style={{ width: (ATTIC_DOOR_W - 4) * s, height: 2 * s }} />
         <div className="apt-stone" style={{ width: (ATTIC_DOOR_W + 2) * s, height: 2 * s }} />
         <div className="apt-stone flex justify-center" style={{ padding: `0 ${2 * s}px` }}>
@@ -440,8 +438,33 @@ function AtticRow({
   );
 }
 
-/** 1F 大廳：中央是公寓的大門（雙開木門 + 氣窗），兩側各一扇大廳窗，不住人 */
+/**
+ * 1F 大廳：中央是公寓的大門，兩側各一扇大廳窗，不住人。
+ * 大門是兩扇對開的木門，會自己隨機開闔 —— 跟百貨公司的自動門一樣，
+ * 像有住戶剛進出完。開闔一樣走 steps() 的三格跳轉。
+ */
 function LobbyRow({ displayScale: s }: { displayScale: number }) {
+  const prefersReduced = useReducedMotion();
+  const [doorOpen, setDoorOpen] = useState(false);
+
+  useEffect(() => {
+    if (prefersReduced) return;
+    let alive = true;
+    let timer = 0;
+    const loop = (open: boolean) => {
+      if (!alive) return;
+      setDoorOpen(open);
+      // 開著停 1.8~3.3 秒（有人在進出），關著停 2.2~4.8 秒
+      const wait = open ? 1800 + Math.random() * 1500 : 2200 + Math.random() * 2600;
+      timer = window.setTimeout(() => loop(!open), wait);
+    };
+    timer = window.setTimeout(() => loop(true), 2000 + Math.random() * 1500);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
+  }, [prefersReduced]);
+
   return (
     <div
       aria-hidden
@@ -466,18 +489,17 @@ function LobbyRow({ displayScale: s }: { displayScale: number }) {
           style={{ width: (CENTER_W - 4) * s, height: 4 * s }}
         />
         <div
-          className="apt-doorway relative overflow-hidden"
+          className={`apt-doorway relative overflow-hidden ${doorOpen ? "apt-doorway-lit" : ""}`}
           style={{ width: (CENTER_W - 2) * s, height: 17 * s }}
         >
-          <div className="apt-leaf absolute inset-y-0 left-0" style={{ width: "50%" }}>
-            <div
-              className="apt-knob absolute"
-              style={{ width: 2 * s, height: 2 * s, right: 2, top: "46%" }}
-            />
-          </div>
+          {/* 兩片門板對開：左片繞左軸、右片繞右軸，一起往室內轉 */}
           <div
-            className="apt-leaf absolute inset-y-0 right-0"
-            style={{ width: "50%", transform: "scaleX(-1)" }}
+            className="apt-leaf absolute inset-y-0 left-0"
+            style={{
+              width: "50%",
+              transformOrigin: "left center",
+              transform: `rotateY(${doorOpen ? 62 : 0}deg)`,
+            }}
           >
             <div
               className="apt-knob absolute"
@@ -485,9 +507,25 @@ function LobbyRow({ displayScale: s }: { displayScale: number }) {
             />
           </div>
           <div
-            className="absolute inset-y-0 left-1/2 -translate-x-1/2"
-            style={{ width: 2, backgroundColor: "var(--door-edge)" }}
-          />
+            className="apt-leaf absolute inset-y-0 right-0"
+            style={{
+              width: "50%",
+              transformOrigin: "right center",
+              transform: `rotateY(${doorOpen ? -62 : 0}deg)`,
+              boxShadow: "inset 3px 0 0 var(--door-edge)",
+            }}
+          >
+            <div
+              className="apt-knob absolute"
+              style={{ width: 2 * s, height: 2 * s, left: 2, top: "46%" }}
+            />
+          </div>
+          {!doorOpen && (
+            <div
+              className="absolute inset-y-0 left-1/2 -translate-x-1/2"
+              style={{ width: 2, backgroundColor: "var(--door-edge)" }}
+            />
+          )}
         </div>
       </div>
     </div>
@@ -496,12 +534,120 @@ function LobbyRow({ displayScale: s }: { displayScale: number }) {
 
 export function PixelApartment() {
   const { scale: s, titleScale, headerPad } = useSceneLayout();
+  const prefersReduced = useReducedMotion();
   const theme = useCurrentTheme();
   const title = usePixelText(apartmentIntro.title, { fontSize: TITLE_FONT });
   const titleVariant = useTitleRoulette();
-  const { phases, openId, knock, close } = useApartmentDoors(apartmentUnits);
-  const opened = apartmentUnits.find((unit) => unit.id === openId);
+  /**
+   * 散步中的住戶：5fps 逐格走過人行道。
+   * 走的時候那一戶交給 useApartmentDoors 當 awayId —— 不探頭、敲門沒人應。
+   */
+  const [walker, setWalker] = useState<{
+    id: string;
+    x: number;
+    dir: 1 | -1;
+    bob: boolean;
+  } | null>(null);
+
+  const { phases, openId, knock, close } = useApartmentDoors(apartmentUnits, walker?.id ?? null);
+  const openedRaw = apartmentUnits.find((unit) => unit.id === openId);
+
+  // 排程要讀「當下」的門況來挑人，鏡一份到 ref 免得重排 effect
+  const phasesSnapRef = useRef(phases);
+  phasesSnapRef.current = phases;
+  const openSnapRef = useRef(openId);
+  openSnapRef.current = openId;
+
+  useEffect(() => {
+    if (prefersReduced) return;
+    let alive = true;
+    let timer = 0;
+
+    const start = () => {
+      if (!alive) return;
+      // 只有門關著、也沒在跟人講話的住戶才會出門
+      const candidates = apartmentUnits.filter(
+        (unit) =>
+          walkSprites[unit.id] &&
+          unit.id !== openSnapRef.current &&
+          (phasesSnapRef.current[unit.id] ?? "closed") === "closed",
+      );
+      if (candidates.length === 0) {
+        timer = window.setTimeout(start, 6000);
+        return;
+      }
+      const picked = candidates[Math.floor(Math.random() * candidates.length)];
+      const dir: 1 | -1 = Math.random() < 0.5 ? 1 : -1;
+      // 位置用區域變數推進，出界判斷才可靠（setState 的 updater 是非同步跑的，
+      // 在裡面設旗標會漏拍，之前就因此走完一位後整個排程卡死）
+      const state = { id: picked.id, x: dir > 0 ? -8 : 108, dir, bob: false };
+      setWalker({ ...state });
+
+      const step = () => {
+        if (!alive) return;
+        state.x += state.dir * 1.1;
+        state.bob = !state.bob;
+        if (state.x < -10 || state.x > 110) {
+          setWalker(null);
+          timer = window.setTimeout(start, 5000 + Math.random() * 8000);
+          return;
+        }
+        setWalker({ ...state });
+        timer = window.setTimeout(step, 200);
+      };
+      timer = window.setTimeout(step, 200);
+    };
+
+    timer = window.setTimeout(start, 3000 + Math.random() * 3000);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
+  }, [prefersReduced]);
   const year = new Date().getFullYear();
+
+  // 服裝間：門一有動靜（探頭或開門）就重抽一張頭套照，像撞見誰在試裝
+  const closetPhase = phases[CLOSET_ID] ?? "closed";
+  const [costume, setCostume] = useState(costumeImages[0]);
+  useEffect(() => {
+    if (closetPhase === "closed") return;
+    setCostume(costumeImages[Math.floor(Math.random() * costumeImages.length)]);
+  }, [closetPhase]);
+
+  /** 服裝間那一戶的住戶照換成本次抽到的頭套照 */
+  const dressed = useCallback(
+    (unit: ApartmentUnit): ApartmentUnit =>
+      unit.id === CLOSET_ID
+        ? { ...unit, resident: { ...unit.resident, img: costume } }
+        : unit,
+    [costume],
+  );
+
+  const opened = openedRaw ? dressed(openedRaw) : undefined;
+
+  // 屋頂彩蛋：青蛙（素材只有半身）隨機從屋頂後面滑出來，探一下再縮回去
+  const [frogUp, setFrogUp] = useState(false);
+  const [frogLeft, setFrogLeft] = useState(30);
+  useEffect(() => {
+    if (prefersReduced) return;
+    let alive = true;
+    let timer = 0;
+    const appear = () => {
+      if (!alive) return;
+      setFrogLeft(6 + Math.random() * 80);
+      setFrogUp(true);
+      timer = window.setTimeout(() => {
+        if (!alive) return;
+        setFrogUp(false);
+        timer = window.setTimeout(appear, 6000 + Math.random() * 10000);
+      }, 2400);
+    };
+    timer = window.setTimeout(appear, 4000 + Math.random() * 4000);
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
+  }, [prefersReduced]);
 
   // 玩法說明掛在路燈上：點路燈才會亮出來，敲門就收掉（讓位給住戶介紹）
   const [helpOpen, setHelpOpen] = useState(false);
@@ -578,10 +724,37 @@ export function PixelApartment() {
       >
         {/* 建築本體 */}
         <div className="relative shrink-0" style={{ width: BUILDING_W * s }}>
-          {/* 煙囪：紅磚身 + 石帽，冒在屋頂右肩上 */}
+          {/* 屋頂青蛙：裁掉下半身的裁口貼著屋頂線，滑出來就像趴在屋頂後面。
+              遮罩交給 overflow-hidden 的窗口，滑動一樣是 steps() 硬跳 */}
           <div
             aria-hidden
-            className="absolute flex flex-col items-center"
+            className="pointer-events-none absolute overflow-hidden"
+            style={{
+              left: `${frogLeft}%`,
+              top: -FROG_H * s,
+              height: FROG_H * s,
+              width: FROG_H * s,
+            }}
+          >
+            <img
+              src={frogImage}
+              alt=""
+              draggable={false}
+              className="max-w-none"
+              style={{
+                height: FROG_H * s,
+                width: "auto",
+                transform: frogUp ? "translateY(10%)" : "translateY(103%)",
+                transition: "transform 0.45s steps(4, end)",
+              }}
+            />
+          </div>
+
+          {/* 煙囪：紅磚身 + 石帽，冒在屋頂右肩上。
+              z-10 讓它壓在 mansard 階梯（灰色橫桿）前面，才像從屋頂長出來 */}
+          <div
+            aria-hidden
+            className="absolute z-10 flex flex-col items-center"
             style={{
               left: (BUILDING_W - PILLAR - CHIMNEY_W - 8) * s,
               top: -(CHIMNEY_H - 4) * s,
@@ -610,7 +783,7 @@ export function PixelApartment() {
           {floors.map((floor) => (
             <FloorRow
               key={floor.label}
-              floor={floor}
+              floor={{ ...floor, units: floor.units.map(dressed) }}
               phases={phases}
               displayScale={s}
               onKnock={knockAndCloseHelp}
@@ -646,12 +819,19 @@ export function PixelApartment() {
           {opened ? (
             <>
               <div className="flex items-center gap-3">
-                <PixelSprite
-                  emoji={opened.resident.emoji}
-                  img={opened.resident.img}
-                  box={RESIDENT_BOX}
-                  displayScale={Math.max(2, s - 1)}
-                />
+                {opened.resident.img ? (
+                  <img
+                    src={opened.resident.img}
+                    alt=""
+                    className="block h-20 w-20 object-contain"
+                  />
+                ) : (
+                  <PixelSprite
+                    emoji={opened.resident.emoji}
+                    box={RESIDENT_BOX}
+                    displayScale={Math.max(2, s - 1)}
+                  />
+                )}
                 <div className="min-w-0">
                   <p className="text-[10px] font-black tracking-[.2em] text-stone-400">
                     {opened.label}
@@ -687,7 +867,7 @@ export function PixelApartment() {
               <button
                 type="button"
                 onClick={close}
-                className="mt-4 w-full border-4 border-stone-700 bg-mayco py-2 text-xs font-black text-white shadow-[4px_4px_0_rgba(68,64,60,.25)]"
+                className="mt-4 w-full border-4 border-stone-700 bg-caramel py-2 text-xs font-black text-white shadow-[4px_4px_0_rgba(68,64,60,.25)]"
               >
                 關上門
               </button>
@@ -718,6 +898,30 @@ export function PixelApartment() {
         </p>
       </div>
 
+      {/* 散步中的住戶：橫越人行道，走出畫面就回家。
+          面向跟行進方向不合才翻面，正面圖不翻 —— 不能有人倒退走 */}
+      {walker && (
+        <img
+          src={walkSprites[walker.id].img}
+          alt=""
+          aria-hidden
+          draggable={false}
+          className="pointer-events-none absolute z-10 max-w-none"
+          style={{
+            left: `${walker.x}%`,
+            bottom: (STREET_H - 2) * s,
+            height: 20 * s,
+            width: "auto",
+            transform: `translateX(-50%) scaleX(${
+              (walkSprites[walker.id].facing === "left" && walker.dir === 1) ||
+              (walkSprites[walker.id].facing === "right" && walker.dir === -1)
+                ? -1
+                : 1
+            }) translateY(${walker.bob ? -2 : 0}px)`,
+          }}
+        />
+      )}
+
       {/* 街燈：點一下亮出玩法說明，再點一下收起來 */}
       <button
         type="button"
@@ -732,7 +936,7 @@ export function PixelApartment() {
         {!helpOpen && (
           <span
             aria-hidden
-            className="apt-hint mb-1 text-[13px] font-black text-mayco"
+            className="apt-hint mb-1 text-[19px] font-black leading-none text-mayco"
           >
             ?
           </span>
@@ -748,20 +952,23 @@ export function PixelApartment() {
         <div className="apt-lamp-post" style={{ width: 2 * s, height: 22 * s }} />
       </button>
 
-      {/* 街景裝飾：純裝飾不吃點擊。窄視窗藏起來，免得擋住公寓 */}
-      {streetProps.map((prop) => (
-        <div
-          key={`${prop.emoji}-${prop.left}`}
+      {/* 創作者畫的植物與小動物：站在人行道上，跟住戶同一種手繪貼紙質感 */}
+      {streetArt.map((prop, index) => (
+        <img
+          key={`${prop.img}-${index}`}
+          src={prop.img}
+          alt=""
           aria-hidden
-          className="pointer-events-none absolute hidden -translate-x-1/2 sm:block"
-          style={{ left: `${prop.left}%`, bottom: (STREET_H - 4) * s }}
-        >
-          <PixelSprite
-            emoji={prop.emoji}
-            box={prop.box}
-            displayScale={scaleFor(s, prop.sizeFactor)}
-          />
-        </div>
+          draggable={false}
+          className="pointer-events-none absolute hidden max-w-none sm:block"
+          style={{
+            left: `${prop.left}%`,
+            bottom: (STREET_H - 2) * s,
+            height: prop.h * s,
+            width: "auto",
+            transform: `translateX(-50%)${prop.flip ? " scaleX(-1)" : ""}`,
+          }}
+        />
       ))}
     </div>
   );

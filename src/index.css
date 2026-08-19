@@ -2,6 +2,11 @@
 
 @theme {
   /* 品牌色：奶油底 + 主橘（太陽 ☀ 的暖色系） */
+  /* 美可的慣用色（出自明信片與貼紙系列，見 CLAUDE.md） */
+  --color-ink: #3a3a38;
+  --color-mist: #b7c7c6;
+  --color-caramel: #c8885a;
+  --color-milk: #d9d8c7;
   --color-cream: #faf6ef;
   --color-cream-deep: #f3ece0;
   --color-mayco: #e8622d;
@@ -318,6 +323,7 @@ body {
   --color-panel: #251f1a;
 
   /* stone 色階整條反轉：700 最亮（標題與粗邊），200 最暗（分隔線） */
+  --color-caramel: #dba06f;
   --color-stone-700: #ece7de;
   --color-stone-600: #d9d3c9;
   --color-stone-500: #b5ada1;
@@ -427,20 +433,21 @@ body {
    轉的過程一律 steps()：門是「啪、啪、啪」三格轉到位，不是平滑旋轉。
    ========================================================================== */
 
-/* 紅磚牆：8px 一皮的磚縫，直縫每 16px 一道，磚色逐皮交替假造出丁順排列 */
+/* 紅磚牆：6px 一皮的磚縫，直縫每 12px 一道，磚色逐皮交替假造出丁順排列。
+   格律刻意比舊版細一級（12x6 而不是 16x8），方塊更小更密，比較 minecraft */
 .apt-brick {
   background-color: var(--brick-a);
   background-image:
     /* 橫向磚縫 */
     repeating-linear-gradient(
       180deg,
-      var(--brick-mortar) 0 2px,
-      transparent 2px 8px
+      var(--brick-mortar) 0 1px,
+      transparent 1px 6px
     ),
     /* 直向磚縫 */
-      repeating-linear-gradient(90deg, var(--brick-mortar) 0 2px, transparent 2px 16px),
+      repeating-linear-gradient(90deg, var(--brick-mortar) 0 1px, transparent 1px 12px),
     /* 逐皮交替的磚色 */
-      repeating-linear-gradient(180deg, var(--brick-a) 0 8px, var(--brick-b) 8px 16px);
+      repeating-linear-gradient(180deg, var(--brick-a) 0 6px, var(--brick-b) 6px 12px);
 }
 
 /* 樓層分隔帶：深一階的磚色，8px 一塊的橫紋，把每層樓清楚隔開 */
@@ -448,8 +455,8 @@ body {
   background-color: var(--brick-belt);
   background-image: repeating-linear-gradient(
     90deg,
-    var(--brick-belt) 0 8px,
-    var(--brick-belt-b) 8px 16px
+    var(--brick-belt) 0 6px,
+    var(--brick-belt-b) 6px 12px
   );
 }
 
@@ -458,8 +465,8 @@ body {
   background-color: var(--slate-a);
   background-image: repeating-linear-gradient(
     90deg,
-    var(--slate-a) 0 8px,
-    var(--slate-b) 8px 16px
+    var(--slate-a) 0 6px,
+    var(--slate-b) 6px 12px
   );
 }
 
@@ -534,7 +541,7 @@ body {
     var(--apt-street-a) 0 75%,
     var(--apt-street-b) 0
   );
-  background-size: 12px 12px;
+  background-size: 8px 8px;
 }
 
 /* 門洞：門打開後看到的室內。perspective 掛在這一層，門板才轉得出立體感 */
@@ -561,8 +568,8 @@ body {
   background-color: var(--door-a);
   background-image: repeating-linear-gradient(
     90deg,
-    var(--door-a) 0 8px,
-    var(--door-b) 8px 10px
+    var(--door-a) 0 6px,
+    var(--door-b) 6px 8px
   );
   transform-origin: left center;
   /* 門緣的厚度：一轉開就看得到，這條線是「推開」與「拉門」的差別 */

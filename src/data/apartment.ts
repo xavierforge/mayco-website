@@ -12,7 +12,7 @@
  * ⚠️ 示意資料：門牌、個性標籤、敲門台詞與工作室介紹都是暫定示意內容，
  *    待創作者提供真實角色設定後替換。住戶的介紹文（`desc`）直接取自 characters.ts。
  */
-import { characters } from "./characters";
+import { asset, characters } from "./characters";
 
 export interface ApartmentResident {
   id: string;
@@ -77,6 +77,7 @@ const floorSpecs: { label: string; kind: "attic" | "floor"; units: UnitSpec[] }[
           name: "美可的工作室",
           short: "美可",
           emoji: "☀",
+          img: asset("characters/mayco.png"),
           desc: "屋主本人的房間，也是這棟公寓的起點。斜屋頂下永遠攤著畫到一半的稿子，窗邊那盆植物是唯一活著的室友。撿回來的動物都先在這裡住幾天，熟了才搬進樓下的空房。",
           caption: "閣樓 · 屋主兼管理員",
         },
@@ -91,15 +92,15 @@ const floorSpecs: { label: string; kind: "attic" | "floor"; units: UnitSpec[] }[
     units: [
       {
         label: "4F-1",
-        characterId: "turtle",
-        tags: ["資深住戶", "超級慢", "曬太陽專家"],
-        knockLine: "……你、已經、敲、第三下、了嗎？我、在、來、的、路上、了。",
+        characterId: "bluecat",
+        tags: ["揮手狂", "遠熱近羞", "記憶力驚人"],
+        knockLine: "（門還沒全開就先伸出手用力揮）嗨——！……啊，你好。",
       },
       {
         label: "4F-2",
-        characterId: "rabbit",
-        tags: ["膽子很小", "很愛撒嬌", "耳朵像麻糬"],
-        knockLine: "（門縫先開一條）誰、誰啊？……啊是你，那我開了！",
+        characterId: "tabby",
+        tags: ["撿花慣犯", "精力旺盛", "陽台園丁"],
+        knockLine: "來了來了！剛好，這朵花送你，今天路邊撿的！",
       },
     ],
   },
@@ -133,9 +134,17 @@ const floorSpecs: { label: string; kind: "attic" | "floor"; units: UnitSpec[] }[
       },
       {
         label: "2F-2",
-        characterId: "chick",
-        tags: ["跌倒專家", "永遠跟在最後", "超有毅力"],
-        knockLine: "啾！等等我——（咚）……我沒事！馬上開門！",
+        characterId: null,
+        self: {
+          id: "closet",
+          name: "服裝間",
+          short: "服裝間",
+          emoji: "🎭",
+          desc: "整棟公寓共用的服裝間，掛滿各種頭套跟道具服。敲門的時候會看到剛好有人在裡面試裝——每次開門都不一定是誰、也不一定戴著哪一頂。",
+          caption: "2F 公共空間",
+        },
+        tags: ["共用衣櫃", "頭套收藏", "試裝進行中"],
+        knockLine: "（裡面傳來窸窸窣窣的聲音）……進來呀，幫我看看這頂合不合適！",
       },
     ],
   },
@@ -198,27 +207,70 @@ export interface ApartmentCloud {
 
 /** 天空。跟像素小鎮的雲同一套逐格飄移，但首頁自己一份，兩邊互不影響 */
 export const apartmentClouds: ApartmentCloud[] = [
-  { emoji: "☁️", left: 14, top: 12, box: 22, sizeFactor: 0.9, delay: 0 },
-  { emoji: "☀", nightEmoji: "🌙", left: 84, top: 10, box: 22, sizeFactor: 1, delay: 1.2 },
-  { emoji: "☁️", left: 68, top: 26, box: 22, sizeFactor: 0.6, delay: 2.4 },
+  { emoji: "☁️", left: 14, top: 12, box: 32, sizeFactor: 0.9, delay: 0 },
+  { emoji: "☀", nightEmoji: "🌙", left: 84, top: 10, box: 32, sizeFactor: 1, delay: 1.2 },
+  { emoji: "☁️", left: 68, top: 26, box: 32, sizeFactor: 0.6, delay: 2.4 },
 ];
 
-export interface StreetProp {
-  emoji: string;
+export interface StreetArt {
+  /** public/street/ 底下的去背素材 */
+  img: string;
   /** 場景寬度百分比 */
   left: number;
-  box: number;
-  sizeFactor: number;
+  /** 顯示高度（格），寬度按原圖比例自動走 */
+  h: number;
+  /** 左右翻面，讓同一張素材看起來不重複 */
+  flip?: boolean;
 }
 
 /**
- * 公寓門口的街景，位置排法照參考照片：左邊一叢杜鵑花，右邊腳踏車與大樹。
- * 純裝飾，不吃點擊。
+ * 公寓門口的街景：小雞與花（去背後放 public/street/）。
+ * 建築佔畫面中段，所以位置都排在兩側的空地上；
+ * 小雞左右各一群、方向亂一點，才像在路上亂跑。
  */
-export const streetProps: StreetProp[] = [
-  { emoji: "🌳", left: 7, box: 22, sizeFactor: 1.1 },
-  { emoji: "🌸", left: 19, box: 20, sizeFactor: 0.9 },
-  { emoji: "🪴", left: 30, box: 20, sizeFactor: 0.55 },
-  { emoji: "🚲", left: 79, box: 20, sizeFactor: 0.7 },
-  { emoji: "🌳", left: 93, box: 22, sizeFactor: 1.2 },
+export const streetArt: StreetArt[] = [
+  { img: asset("street/flower.png"), left: 8, h: 15 },
+  { img: asset("street/chicken.png"), left: 16, h: 12 },
+  { img: asset("street/chicken.png"), left: 23, h: 11, flip: true },
+  { img: asset("street/flower.png"), left: 30, h: 14 },
+  { img: asset("street/chicken.png"), left: 70, h: 11 },
+  { img: asset("street/flower.png"), left: 78, h: 15 },
+  { img: asset("street/chicken.png"), left: 86, h: 12, flip: true },
+  { img: asset("street/flower.png"), left: 93, h: 14 },
 ];
+
+/** 屋頂彩蛋：只有半身的青蛙，會隨機從屋頂後面滑出來探一下再縮回去 */
+export const frogImage = asset("street/frog.png");
+
+export interface WalkSprite {
+  img: string;
+  /**
+   * 原圖的面向。散步方向跟面向不合時要水平翻面，
+   * 不然會倒退走（正面圖兩個方向都行，不翻）。
+   */
+  facing: "left" | "right" | "front";
+}
+
+/**
+ * 散步用的走路圖（key 對應住戶 id；美可的 id 是 studio）。
+ * 有走路圖的住戶才會被抽去散步；散步中那一戶敲門不會有人應。
+ */
+export const walkSprites: Record<string, WalkSprite> = {
+  studio: { img: asset("characters/walk/mayco.png"), facing: "left" },
+  bear: { img: asset("characters/walk/bear.png"), facing: "front" },
+  dog: { img: asset("characters/walk/dog.png"), facing: "left" },
+  bluecat: { img: asset("characters/walk/bluecat.png"), facing: "left" },
+  cat: { img: asset("characters/walk/calico.png"), facing: "front" },
+  tabby: { img: asset("characters/walk/tabby.png"), facing: "front" },
+};
+
+/** 服裝間的 id：開門時要換上隨機頭套照的那一戶 */
+export const CLOSET_ID = "closet";
+
+/**
+ * 服裝間的頭套照片池（芭樂頭套系列，同一批動物）。
+ * 每次開門隨機抽一張，像是撞見誰正在試裝。
+ */
+export const costumeImages: string[] = ["bear", "tabby", "dog", "calico", "bluecat"].map(
+  (id) => asset(`characters/costumes/${id}-guava.png`),
+);

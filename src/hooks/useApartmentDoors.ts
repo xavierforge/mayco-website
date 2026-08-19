@@ -21,6 +21,8 @@ import type { ApartmentUnit } from "../data/apartment";
  *
  * 隨機開門刻意用 setTimeout 串接而不是固定 interval，間隔本身是亂數，
  * 看起來才像住戶各自有事在忙，而不是排班表。
+ *
+ * `awayId` 是正在外面散步的住戶：不會自己探頭，敲門也只會抖一抖沒人應。
  */
 
 export type DoorPhase = "closed" | "crack" | "peek" | "knocking" | "open";
@@ -56,7 +58,10 @@ export interface ApartmentDoors {
 const allClosed = (units: ApartmentUnit[]): Record<string, DoorPhase> =>
   Object.fromEntries(units.map((unit) => [unit.id, "closed" as DoorPhase]));
 
-export function useApartmentDoors(units: ApartmentUnit[]): ApartmentDoors {
+export function useApartmentDoors(
+  units: ApartmentUnit[],
+  awayId: string | null = null,
+): ApartmentDoors {
   const prefersReduced = useReducedMotion();
   const [phases, setPhases] = useState<Record<string, DoorPhase>>(() => allClosed(units));
   const [openId, setOpenId] = useState<string | null>(null);
@@ -66,6 +71,8 @@ export function useApartmentDoors(units: ApartmentUnit[]): ApartmentDoors {
   phasesRef.current = phases;
   const openIdRef = useRef(openId);
   openIdRef.current = openId;
+  const awayIdRef = useRef(awayId);
+  awayIdRef.current = awayId;
 
   const knockTimerRef = useRef(0);
   const curiousTimerRef = useRef(0);
@@ -93,7 +100,11 @@ export function useApartmentDoors(units: ApartmentUnit[]): ApartmentDoors {
       units
         .map((unit) => unit.id)
         .filter(
-          (id) => id !== exceptId && id !== openIdRef.current && phasesRef.current[id] === "closed",
+          (id) =>
+            id !== exceptId &&
+            id !== openIdRef.current &&
+            id !== awayIdRef.current &&
+            phasesRef.current[id] === "closed",
         ),
     [units],
   );
@@ -118,6 +129,15 @@ export function useApartmentDoors(units: ApartmentUnit[]): ApartmentDoors {
       if (openIdRef.current === id) {
         setOpenId(null);
         setPhases((phase) => ({ ...phase, [id]: "closed" }));
+        return;
+      }
+
+      // 人在外面散步：門抖一抖，多等一拍，還是沒人來開
+      if (awayIdRef.current === id) {
+        setPhases((phase) => ({ ...phase, [id]: "knocking" }));
+        knockTimerRef.current = window.setTimeout(() => {
+          setPhases((phase) => ({ ...phase, [id]: "closed" }));
+        }, KNOCK_MS + 900);
         return;
       }
 
