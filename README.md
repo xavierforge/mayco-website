@@ -51,7 +51,14 @@ npm run lint
 - 門把是**門板的小孩**，跟著門一起轉進去，不會憑空消失再出現
 - 住戶站的位置從門的角度算出來（`residentCenterOf`）：門板投影寬約 `cos(角度)`，
   剩下那條縫才看得到人 —— 全開、探頭、門縫偷看三種樣子共用同一套幾何
-- `prefers-reduced-motion: reduce` 時不再隨機開門、不演敲門動畫，點門直接開
+- `prefers-reduced-motion: reduce` 時不再隨機開門、不演敲門動畫，點門直接開；
+  自動大門、屋頂青蛙、散步全部停用
+- 角色是創作者的真實貼紙素材（`assets-stickers/`，不進版控；去背處理後放
+  `public/characters/`）。門裡與介紹卡都用原圖直接縮放，只有 emoji 佔位才像素化
+- 2F-2 是共用服裝間：門一有動靜就從芭樂頭套系列（`public/characters/costumes/`）隨機抽一張
+- 環境彩蛋：住戶會被隨機抽去散步（`public/characters/walk/`，散步中敲門沒人應）、
+  一樓大門像百貨公司一樣自動開闔、屋頂偶爾冒出只有半身的青蛙
+- 美可的慣用色（炭黑/霧藍灰/焦糖橘/米白）記錄在 CLAUDE.md，token 在 index.css
 
 原本的物理樂園（`usePhysics.ts` + `Playground.tsx`）已經移除。
 根目錄的 `demo.html` 是當初從 ebifura.art 反編譯出來的 vanilla 參考實作，
