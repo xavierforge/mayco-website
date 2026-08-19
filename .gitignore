@@ -25,4 +25,3 @@ dist-ssr
 
 # 創作者提供的原始素材（全切防水貼紙系列；挑選處理後的檔案放 public/characters/）
 assets-stickers/
-*.pdf
