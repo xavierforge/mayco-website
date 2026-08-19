@@ -7,6 +7,8 @@
   --color-mayco: #e8622d;
   --color-mayco-soft: #f28b5c;
   --color-sun: #f2b544;
+  /* 卡片／膠囊的底色。暗色主題會換成深灰，所以元件請用 bg-panel，不要寫死白色 */
+  --color-panel: #ffffff;
 
   --font-sans: "Noto Sans TC", -apple-system, "PingFang TC", "Microsoft JhengHei",
     sans-serif;
@@ -25,9 +27,9 @@ body {
 }
 
 @utility sticker {
-  /* 貼紙感：白色粗框 + 柔和陰影 */
-  background-color: #fff;
-  border: 3px solid #fff;
+  /* 貼紙感：粗框 + 柔和陰影（框與底同色，暗色主題一起換） */
+  background-color: var(--color-panel);
+  border: 3px solid var(--color-panel);
   border-radius: var(--radius-2xl);
   box-shadow:
     0 2px 0 rgba(120, 80, 40, 0.06),
@@ -238,81 +240,154 @@ body {
 }
 
 /* ==========================================================================
-   像素小鎮（/pixel，首頁的實驗版本）
+/* ==========================================================================
+   明暗主題（白天／夜晚）
+
+   主題只有兩種來源：使用者當地時間（06:00~18:00 亮、其餘暗），
+   以及使用者自己按導覽列那顆按鈕留下的偏好（存在 localStorage）。
+   實作在 src/hooks/useTheme.ts，套用方式是在 <html> 上掛 data-theme。
+
+   做法是「同一組 token、兩套值」：Tailwind v4 的 @theme 產生的
+   --color-* 本身就是 CSS 變數，所以這裡只要在 :root[data-theme="dark"]
+   重新宣告同名變數，全站吃 bg-cream / text-stone-600 的 utility 都會一起翻面，
+   元件端不需要寫任何 dark: 變體。stone 色階是整條反轉（700 最亮、200 最暗），
+   因為站上 stone 只用在文字與邊框。
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* --- 天空 --- */
+  --sky-1: #cfe3ea;
+
+  /* --- 紅磚（參考波士頓 brownstone 的深紅磚）--- */
+  --brick-a: #a2523a;
+  --brick-b: #96492f;
+  --brick-mortar: #7c3b28;
+  /* 樓層分隔帶：比牆深一階的磚 */
+  --brick-belt: #7c3b28;
+  --brick-belt-b: #6e3423;
+
+  /* --- 石造構件：窗楣、拱心石、階梯、招牌 --- */
+  --stone-a: #d9ccb5;
+  --stone-b: #c6b79d;
+  --stone-edge: #9d8f77;
+
+  /* --- mansard 石板屋頂 --- */
+  --slate-a: #4a4d53;
+  --slate-b: #40434a;
+
+  /* --- 窗玻璃 --- */
+  --glass: #8fa7ad;
+  --glass-lit: #f2c96a;
+  --glass-frame: #3a3531;
+
+  /* --- 黑鐵：逃生梯、欄杆、街燈 --- */
+  --iron: #2f2d2c;
+  --iron-light: #444140;
+  --lamp-glow: rgba(242, 201, 106, 0);
+
+  /* --- 門 --- */
+  --door-a: #8a5a33;
+  --door-b: #7d4f2c;
+  --door-edge: #4a2c15;
+  --door-inside: #3b332c;
+  --door-inside-edge: #241f1b;
+  --door-lit-a: #7d6a50;
+  --door-lit-b: #5c4d3a;
+  --apt-knob: #f2b544;
+
+  /* --- 人行道 --- */
+  --apt-street-a: #c9bda6;
+  --apt-street-b: #c0b39a;
+
+  /* 8-bit 方框的邊與硬陰影 */
+  --edge: #44403c;
+  --edge-shadow: rgba(68, 64, 60, 0.25);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* 品牌色：暗底下橘色要再亮一階才咬得住對比 */
+  --color-cream: #17130f;
+  --color-cream-deep: #211b16;
+  --color-mayco: #f5834f;
+  --color-mayco-soft: #f7a582;
+  --color-sun: #f5c45f;
+  --color-panel: #251f1a;
+
+  /* stone 色階整條反轉：700 最亮（標題與粗邊），200 最暗（分隔線） */
+  --color-stone-700: #ece7de;
+  --color-stone-600: #d9d3c9;
+  --color-stone-500: #b5ada1;
+  --color-stone-400: #8d857a;
+  --color-stone-300: #4b443d;
+  --color-stone-200: #332d27;
+
+  /* 夜晚：天空壓成三段硬切的夜色，磚與石板都往下壓兩階，亮著的窗更顯眼 */
+  --sky-1: #1b2344;
+
+  --brick-a: #4c2a20;
+  --brick-b: #45241c;
+  --brick-mortar: #331a14;
+  --brick-belt: #331a14;
+  --brick-belt-b: #2b1611;
+
+  --stone-a: #6b6153;
+  --stone-b: #5d5449;
+  --stone-edge: #423b33;
+
+  --slate-a: #24262b;
+  --slate-b: #1e2024;
+
+  --glass: #223038;
+  --glass-lit: #f7d477;
+  --glass-frame: #16120f;
+
+  --iron: #1a1918;
+  --iron-light: #2b2827;
+  --lamp-glow: rgba(247, 212, 119, 0.28);
+
+  --door-a: #5f4025;
+  --door-b: #543821;
+  --door-edge: #2a1a0e;
+  --door-inside: #14100d;
+  --door-inside-edge: #0b0908;
+  --door-lit-a: #8a6a3f;
+  --door-lit-b: #6a4f2d;
+  --apt-knob: #d99a33;
+
+  --apt-street-a: #3a332c;
+  --apt-street-b: #342e28;
+
+  --edge: #ece7de;
+  --edge-shadow: rgba(0, 0, 0, 0.55);
+}
+
+/* ==========================================================================
+   8-bit 場景的共用零件
 
    所有色塊都是硬邊：漸層一律用 hard stop 或 repeating/conic gradient 做成
    8px 格律的磁磚，絕不出現平滑漸層，否則像素感會被糊掉。
+   顏色全部走上面那組 token，白天／夜晚共用同一份規則。
    ========================================================================== */
 
 @utility pixelated {
   image-rendering: pixelated;
 }
 
-/* 天空：三段硬切的色帶，不是漸層 */
+/* 天空：單一色，雲和太陽／月亮就是全部的點綴 */
 .pixel-sky {
-  background: linear-gradient(
-    to bottom,
-    #cfe3ea 0 42%,
-    #dceaee 42% 68%,
-    #ecdfc4 68% 100%
-  );
-}
-
-/* 地面草地：8px 一格的棋盤格磁磚 */
-.pixel-ground {
-  background-color: #bcc98f;
-  background-image: conic-gradient(
-    from 90deg at 50% 50%,
-    #bcc98f 0 25%,
-    #b3c185 0 50%,
-    #bcc98f 0 75%,
-    #b3c185 0
-  );
-  background-size: 16px 16px;
-}
-
-/* 路：同樣的格律，換一組土色 */
-.pixel-path {
-  background-color: #d9c69a;
-  background-image: conic-gradient(
-    from 90deg at 50% 50%,
-    #d9c69a 0 25%,
-    #d0bb8d 0 50%,
-    #d9c69a 0 75%,
-    #d0bb8d 0
-  );
-  background-size: 16px 16px;
-}
-
-/* 地平線的接縫：一排 8px 方塊，讓草地與遠景之間有鋸齒感 */
-.pixel-seam {
-  background-image: repeating-linear-gradient(
-    90deg,
-    #a9b87b 0 8px,
-    #bcc98f 8px 16px
-  );
+  background: var(--sky-1);
 }
 
 /* 8-bit 方框：方角、粗邊、硬陰影，沒有圓角也沒有柔邊 */
 @utility pixel-panel {
-  background-color: #fffdf7;
-  border: 4px solid #44403c;
+  background-color: var(--color-panel);
+  border: 4px solid var(--edge);
   border-radius: 0;
-  box-shadow: 6px 6px 0 rgba(68, 64, 60, 0.25);
-}
-
-/* 對話框：pixel-panel 加一個方形的小尖角 */
-.pixel-bubble::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -14px;
-  width: 10px;
-  height: 10px;
-  margin-left: -5px;
-  background-color: #fffdf7;
-  border-right: 4px solid #44403c;
-  border-bottom: 4px solid #44403c;
+  box-shadow: 6px 6px 0 var(--edge-shadow);
 }
 
 /* 雲：非常慢的逐格飄移，一樣是 steps() */
@@ -335,28 +410,300 @@ body {
   animation: pixel-drift 4.8s steps(1, end) infinite;
 }
 
-/* 對話框彈出：兩格就到位，8-bit 視窗那種「啪」地出現 */
-@keyframes pixel-pop {
+/* ==========================================================================
+   美可公寓（首頁）
+
+   造型參考波士頓 brownstone：紅磚立面、mansard 石板屋頂加老虎窗、
+   凸窗配石造窗楣、拱門石階、以及正面那道黑鐵逃生梯。
+   一層一戶，美可自己住最上面的閣樓（老虎窗就是她的門）。
+
+   整棟樓是 CSS 方塊堆出來的，不是圖：磚、瓦、玻璃、鐵件都用 hard stop 的
+   repeating gradient 做成 8px 格律，方角、粗邊，沒有圓角也沒有柔邊。
+   住戶 sprite 才是 canvas 產生的像素圖（見 src/lib/pixelate.ts）。
+
+   門是「往室內推開」的旋轉門，不是拉門：門板繞左側門軸 rotateY，
+   門洞掛 perspective，所以門板會透視收窄、看得到門緣的厚度。
+   ⚠️ 不要改回 scaleX —— 橫向縮放看起來是拉門／捲門，沒有開門的感覺。
+   轉的過程一律 steps()：門是「啪、啪、啪」三格轉到位，不是平滑旋轉。
+   ========================================================================== */
+
+/* 紅磚牆：8px 一皮的磚縫，直縫每 16px 一道，磚色逐皮交替假造出丁順排列 */
+.apt-brick {
+  background-color: var(--brick-a);
+  background-image:
+    /* 橫向磚縫 */
+    repeating-linear-gradient(
+      180deg,
+      var(--brick-mortar) 0 2px,
+      transparent 2px 8px
+    ),
+    /* 直向磚縫 */
+      repeating-linear-gradient(90deg, var(--brick-mortar) 0 2px, transparent 2px 16px),
+    /* 逐皮交替的磚色 */
+      repeating-linear-gradient(180deg, var(--brick-a) 0 8px, var(--brick-b) 8px 16px);
+}
+
+/* 樓層分隔帶：深一階的磚色，8px 一塊的橫紋，把每層樓清楚隔開 */
+.apt-belt {
+  background-color: var(--brick-belt);
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--brick-belt) 0 8px,
+    var(--brick-belt-b) 8px 16px
+  );
+}
+
+/* mansard 石板瓦：8px 一道的硬邊直紋 */
+.apt-slate {
+  background-color: var(--slate-a);
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--slate-a) 0 8px,
+    var(--slate-b) 8px 16px
+  );
+}
+
+/* 石造構件：窗楣、拱心石、階梯、招牌板。上緣打亮、下緣壓暗，硬邊兩道 */
+.apt-stone {
+  background-color: var(--stone-a);
+  background-image: linear-gradient(
+    180deg,
+    var(--stone-a) 0 calc(100% - 4px),
+    var(--stone-b) calc(100% - 4px) 100%
+  );
+  box-shadow: inset 0 0 0 2px var(--stone-edge);
+}
+
+/* 窗玻璃：硬邊窗框 + 四格窗櫺 */
+.apt-glass {
+  background-color: var(--glass);
+  background-image: repeating-linear-gradient(
+      90deg,
+      transparent 0 calc(50% - 2px),
+      var(--glass-frame) calc(50% - 2px) calc(50% + 2px),
+      transparent calc(50% + 2px) 100%
+    ),
+    repeating-linear-gradient(
+      180deg,
+      transparent 0 calc(50% - 2px),
+      var(--glass-frame) calc(50% - 2px) calc(50% + 2px),
+      transparent calc(50% + 2px) 100%
+    );
+  box-shadow: inset 0 0 0 3px var(--glass-frame);
+}
+
+/* 亮著的窗。夜晚整棟樓靠這個才有人住的感覺 */
+.apt-glass-lit {
+  background-color: var(--glass-lit);
+}
+
+/* 鍛鐵欄杆：直立鐵條 + 上下橫桿 */
+.apt-fence {
+  background-image: repeating-linear-gradient(
+      90deg,
+      var(--iron) 0 3px,
+      transparent 3px 12px
+    ),
+    linear-gradient(180deg, var(--iron) 0 3px, transparent 3px calc(100% - 3px), var(--iron) calc(100% - 3px) 100%);
+}
+
+/* 煤氣街燈 */
+.apt-lamp-post {
+  background-color: var(--iron);
+  background-image: repeating-linear-gradient(
+    180deg,
+    var(--iron) 0 6px,
+    var(--iron-light) 6px 8px
+  );
+}
+
+.apt-lamp-head {
+  background-color: var(--glass-lit);
+  box-shadow:
+    inset 0 0 0 3px var(--iron),
+    0 0 0 6px var(--lamp-glow);
+}
+
+/* 人行道：12px 一格的方磚 */
+.apt-street {
+  background-color: var(--apt-street-a);
+  background-image: conic-gradient(
+    from 90deg at 50% 50%,
+    var(--apt-street-a) 0 25%,
+    var(--apt-street-b) 0 50%,
+    var(--apt-street-a) 0 75%,
+    var(--apt-street-b) 0
+  );
+  background-size: 12px 12px;
+}
+
+/* 門洞：門打開後看到的室內。perspective 掛在這一層，門板才轉得出立體感 */
+.apt-doorway {
+  background-color: var(--door-inside);
+  box-shadow:
+    inset 0 0 0 2px var(--door-inside-edge),
+    0 0 0 3px var(--stone-b);
+  perspective: 260px;
+}
+
+/* 開門時室內的燈光。硬切兩段，不是漸層 */
+.apt-doorway-lit {
+  background-color: var(--door-lit-a);
+  background-image: linear-gradient(
+    to bottom,
+    var(--door-lit-a) 0 55%,
+    var(--door-lit-b) 55% 100%
+  );
+}
+
+/* 門板：直紋木門，繞左邊門軸往室內轉 */
+.apt-leaf {
+  background-color: var(--door-a);
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--door-a) 0 8px,
+    var(--door-b) 8px 10px
+  );
+  transform-origin: left center;
+  /* 門緣的厚度：一轉開就看得到，這條線是「推開」與「拉門」的差別 */
+  box-shadow: inset -3px 0 0 var(--door-edge);
+  transition: transform 0.28s steps(3, end);
+}
+
+/* 門把：一顆方形小方塊 */
+.apt-knob {
+  background-color: var(--apt-knob);
+  box-shadow: inset 0 0 0 2px var(--door-edge);
+}
+
+/* 窗戶偶爾換一下亮暗，整棟樓才像有人住。一樣是跳格，不是呼吸燈 */
+@keyframes apt-window-blink {
   0% {
-    transform: translate(-50%, 6px) scale(0.7);
-    opacity: 0;
+    filter: brightness(1);
   }
   50% {
-    transform: translate(-50%, 0) scale(1.06);
-    opacity: 1;
+    filter: brightness(0.88);
+  }
+}
+
+.apt-window-blink {
+  animation: apt-window-blink 1.4s steps(1, end) infinite;
+}
+
+/* 敲門：整個門框左右抖四下，每下都是硬跳 */
+@keyframes apt-knock {
+  0% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  50% {
+    transform: translateX(0);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+.apt-knocking {
+  animation: apt-knock 0.16s steps(1, end) 4;
+}
+
+/* 探頭時住戶上下晃：兩格，約 4fps */
+@keyframes apt-bob {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+.apt-bob {
+  animation: apt-bob 0.5s steps(1, end) infinite;
+}
+
+/* 從門縫偷看：晃得比探頭小，像怕被發現 */
+@keyframes apt-spy {
+  0% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-1px);
+  }
+}
+
+.apt-spy {
+  animation: apt-spy 0.9s steps(1, end) infinite;
+}
+
+/* 路燈的點擊提示：燈頭兩格閃爍，像在招手。說明牌打開時停止 */
+@keyframes apt-lamp-wink {
+  0% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.35);
+  }
+}
+
+.apt-lamp-wink {
+  animation: apt-lamp-wink 1.2s steps(1, end) infinite;
+}
+
+/* 路燈頭上的「?」：三格上下跳，跟站上其他逐格動畫同一個節奏 */
+@keyframes apt-hint-bounce {
+  0% {
+    transform: translateY(0);
+  }
+  33% {
+    transform: translateY(-3px);
+  }
+  66% {
+    transform: translateY(-1px);
+  }
+}
+
+.apt-hint {
+  animation: apt-hint-bounce 0.9s steps(1, end) infinite;
+}
+
+/* 佈告板彈出：兩格就到位，8-bit 視窗那種「啪」地出現。
+   置中用的位移走 translate 屬性（Tailwind v4），跟這裡的 transform 不打架 */
+@keyframes apt-pop {
+  0% {
+    transform: scale(0.92);
+    opacity: 0;
   }
   100% {
-    transform: translate(-50%, 0) scale(1);
+    transform: scale(1);
     opacity: 1;
   }
 }
 
-.pixel-pop {
-  animation: pixel-pop 0.18s steps(1, end) both;
+.apt-pop {
+  animation: apt-pop 0.14s steps(2, end) both;
+}
+
+/* 「叩叩叩」：跳出來就不動，跟 8-bit 的文字視窗一樣 */
+@keyframes apt-knock-text {
+  0% {
+    transform: translate(-50%, 4px);
+    opacity: 0;
+  }
+  100% {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+.apt-knock-text {
+  animation: apt-knock-text 0.12s steps(2, end) both;
 }
 
 /* 使用者要求減少動態時，全站這幾組動畫一律停掉
-   （探頭動物連生成都會被關掉、小鎮居民會站著不動，見各自的元件） */
+   （探頭動物連生成都會被關掉，見各自的元件） */
 @media (prefers-reduced-motion: reduce) {
   .critter,
   .critter-wiggle,
@@ -368,7 +715,19 @@ body {
   .title-tilt,
   .shaker,
   .pixel-cloud,
-  .pixel-pop {
+  .apt-window-blink,
+  .apt-knocking,
+  .apt-bob,
+  .apt-spy,
+  .apt-pop,
+  .apt-lamp-wink,
+  .apt-hint,
+  .apt-knock-text {
     animation: none !important;
+  }
+
+  /* 門直接到位，不演三格開門 */
+  .apt-leaf {
+    transition: none;
   }
 }

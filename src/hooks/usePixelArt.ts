@@ -11,28 +11,36 @@ import {
  * 像素素材的 React 介面。
  *
  * 顯示尺寸一律用「source 格數 × 整數倍」算出來，格子才會對齊實體像素；
- * useDisplayScale 就是那個整數倍（手機 3 倍、桌機 4 倍）。
+ * 那個整數倍由用的人決定（首頁的公寓用 useSceneScale 由內容需求反推）。
  */
 
-const COMPACT_QUERY = "(max-width: 639px)";
-
-/** 顯示倍率：手機 3、桌機 4 */
-export function useDisplayScale(): number {
-  const [compact, setCompact] = useState(() => {
-    if (typeof window === "undefined" || !window.matchMedia) return false;
-    return window.matchMedia(COMPACT_QUERY).matches;
+/**
+ * 讀 <html> 上的 CSS 變數，並在 data-theme 變動時重讀。
+ *
+ * canvas 產生的素材（像素標題）是把顏色烤進 dataURL 的，
+ * 不像 CSS 那樣會自己跟著主題翻面，所以需要主動知道主題換了、重畫一張。
+ */
+function useThemeToken(name: string): string | undefined {
+  const [value, setValue] = useState<string | undefined>(() => {
+    if (typeof document === "undefined") return undefined;
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim() || undefined;
   });
 
   useEffect(() => {
-    if (!window.matchMedia) return;
-    const mql = window.matchMedia(COMPACT_QUERY);
-    const onChange = () => setCompact(mql.matches);
-    onChange();
-    mql.addEventListener("change", onChange);
-    return () => mql.removeEventListener("change", onChange);
-  }, []);
+    const read = () =>
+      setValue(
+        getComputedStyle(document.documentElement).getPropertyValue(name).trim() || undefined,
+      );
+    read();
+    const observer = new MutationObserver(read);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["data-theme"],
+    });
+    return () => observer.disconnect();
+  }, [name]);
 
-  return compact ? 3 : 4;
+  return value;
 }
 
 export interface PixelSource {
@@ -66,18 +74,21 @@ export function usePixelSprite(source: PixelSource, options: PixelOptions = {}):
 /**
  * 像素標題。
  * 要等字型載完才畫，不然會用系統預設字型畫出來、之後也不會自己更新。
+ * 沒有指定顏色時吃主題的主色，主題換了會重畫（顏色是烤進 dataURL 的）。
  */
 export function usePixelText(
   text: string,
   options: PixelOptions & { fontSize?: number; color?: string } = {},
 ): PixelTextResult | null {
   const { fontSize, color, scale } = options;
+  const themeColor = useThemeToken("--color-mayco");
+  const inkColor = color ?? themeColor;
   const [result, setResult] = useState<PixelTextResult | null>(null);
 
   useEffect(() => {
     let alive = true;
     const draw = () => {
-      if (alive) setResult(pixelateText(text, { fontSize, color, scale }));
+      if (alive) setResult(pixelateText(text, { fontSize, color: inkColor, scale }));
     };
     const fonts = document.fonts;
     if (fonts?.ready) {
@@ -88,7 +99,7 @@ export function usePixelText(
     return () => {
       alive = false;
     };
-  }, [text, fontSize, color, scale]);
+  }, [text, fontSize, inkColor, scale]);
 
   return result;
 }

@@ -1,10 +1,26 @@
 import { NavLink } from "react-router-dom";
 import { brand, navItems } from "../data/site";
+import type { Theme, ThemeMode } from "../hooks/useTheme";
+
+/** 主題鈕的三段狀態：跟著時間、強制亮色、強制暗色 */
+const THEME_BUTTON: Record<ThemeMode, { emoji: string; label: string }> = {
+  auto: { emoji: "🕒", label: "主題：跟著時間" },
+  light: { emoji: "☀", label: "主題：亮色" },
+  dark: { emoji: "🌙", label: "主題：暗色" },
+};
+
+interface NavProps {
+  theme: Theme;
+  mode: ThemeMode;
+  onCycleTheme: () => void;
+}
 
 /**
  * 頂部導覽。手機上縮成一排可橫向捲動的膠囊按鈕，桌機展開成一般選單。
+ * 最右邊是主題鈕：預設跟著使用者的時間走，按一下可以自己指定亮／暗。
  */
-export function Nav() {
+export function Nav({ theme, mode, onCycleTheme }: NavProps) {
+  const button = THEME_BUTTON[mode];
   return (
     <header className="sticky top-0 z-50 border-b border-stone-200/70 bg-cream/85 backdrop-blur-md">
       <nav className="mx-auto flex max-w-5xl items-center gap-3 px-4 py-3 sm:gap-6 sm:px-6">
@@ -34,7 +50,7 @@ export function Nav() {
                     "block rounded-full px-3 py-1.5 text-sm font-bold transition-colors sm:text-[15px]",
                     isActive
                       ? "bg-mayco text-white shadow-sm"
-                      : "text-stone-500 hover:bg-white hover:text-mayco",
+                      : "text-stone-500 hover:bg-panel hover:text-mayco",
                   ].join(" ")
                 }
               >
@@ -43,6 +59,16 @@ export function Nav() {
             </li>
           ))}
         </ul>
+
+        <button
+          type="button"
+          onClick={onCycleTheme}
+          title={`${button.label}（目前是${theme === "dark" ? "暗色" : "亮色"}）`}
+          aria-label={button.label}
+          className="shrink-0 rounded-full bg-panel px-3 py-1.5 text-sm font-bold text-stone-500 shadow-sm transition-transform hover:-translate-y-0.5 hover:text-mayco"
+        >
+          <span aria-hidden>{button.emoji}</span>
+        </button>
       </nav>
     </header>
   );

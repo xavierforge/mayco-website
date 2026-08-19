@@ -45,7 +45,7 @@ export function Story() {
               ].join(" ")}
             >
               <div className="flex shrink-0 flex-col items-center gap-2">
-                <div className="flex h-32 w-32 items-center justify-center rounded-full bg-white shadow-[0_10px_24px_-14px_rgba(120,80,40,.55)] sm:h-36 sm:w-36">
+                <div className="flex h-32 w-32 items-center justify-center rounded-full bg-panel shadow-[0_10px_24px_-14px_rgba(120,80,40,.55)] sm:h-36 sm:w-36">
                   <span className="text-5xl leading-none sm:text-6xl">{section.scene}</span>
                 </div>
                 {section.caption && (

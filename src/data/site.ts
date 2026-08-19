@@ -42,7 +42,6 @@ export const navItems: NavItem[] = [
   { to: "/story", label: "美可的故事" },
   { to: "/history", label: "品牌履歷" },
   { to: "/shop", label: "經典商品" },
-  { to: "/pixel", label: "像素小鎮" },
 ];
 
 /** 真實聯絡資訊（已確認，可直接使用） */

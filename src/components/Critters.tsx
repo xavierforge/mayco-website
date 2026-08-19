@@ -10,7 +10,7 @@ import type { CritterAnimal } from "../data/critters";
  * 手繪 GIF 抖動感；之後拿到真的 GIF 素材，只要在 critters.ts 填 `img`
  * 就會直接改放圖片，這裡不用動。
  *
- * 探頭的動物是獨立角色池（見 src/data/critters.ts），跟樂園六隻主角色不重複。
+ * 探頭的動物是獨立角色池（見 src/data/critters.ts），跟公寓住戶那批主角色不重複。
  */
 
 /** 首次出現的延遲 */
