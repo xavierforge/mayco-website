@@ -42,7 +42,7 @@ npm run lint
   而且有人開門後會馬上安排一位鄰居偷看，像被講話聲吸引過來
 - `src/components/pixel/PixelApartment.tsx` — 建築本體。**所有尺寸都以「格」為單位寫，
   再乘上整數倍率換成 px**，磚與門的邊界才會落在實體像素上。改尺寸請改格數常數，不要直接寫 px。
-  倍率不是寫死的視窗門檻：`useSceneScale` 對每個候選倍率算出「導覽列＋標題＋整棟樓＋人行道」
+  倍率不是寫死的視窗門檻：`useSceneLayout` 對每個候選倍率算出「導覽列＋標題＋整棟樓＋人行道」
   需要的視窗大小，取塞得下的最大整數倍（2~6），樓層加高或建築加寬時它自己會跟著變
 - 磚、瓦、玻璃、鐵件都是 `index.css` 裡 hard stop 的 repeating／conic gradient（`.apt-*`），
   只有住戶 sprite 與像素標題是 canvas 現場產生的（`src/lib/pixelate.ts`）
