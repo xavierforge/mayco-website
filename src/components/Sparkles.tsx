@@ -33,7 +33,7 @@ interface Sparkle {
 
 function buildSparkles(count: number, seed: number, intensity: number): Sparkle[] {
   let s = seed;
-  // Lehmer / minimal standard LCG，與 demo.html 同一套
+  // Lehmer / minimal standard LCG（乘數 16807、模數 2^31-1）：同一個 seed 永遠產出同一組火花
   const rand = () => ((s = (16807 * s) % 2147483647) - 1) / 2147483646;
 
   const out: Sparkle[] = [];

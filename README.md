@@ -16,7 +16,7 @@ npm run lint
 ```
 
 技術棧：Vite + React + TypeScript（strict）、Tailwind CSS v4、react-router-dom、motion。
-（物理樂園移除後 matter-js 已從 dependencies 拿掉；`demo.html` 是獨立的參考檔，走 CDN 不吃 node_modules。）
+（物理樂園移除後 matter-js 已從 dependencies 拿掉。）
 
 ## 部署
 
@@ -61,8 +61,6 @@ npm run lint
 - 美可的慣用色（炭黑/霧藍灰/焦糖橘/米白）記錄在 CLAUDE.md，token 在 index.css
 
 原本的物理樂園（`usePhysics.ts` + `Playground.tsx`）已經移除。
-根目錄的 `demo.html` 是當初從 ebifura.art 反編譯出來的 vanilla 參考實作，
-裡面的物理手感值還留著，**請保留不要改動**，之後想復活物理樂園時從它移植回來最快。
 
 ## 明暗主題（按使用者時間）
 
