@@ -25,7 +25,7 @@ const STORAGE_KEY = "mayco-theme";
 const DAY_START = 6;
 const DAY_END = 18;
 
-export const themeForHour = (hour: number): Theme =>
+const themeForHour = (hour: number): Theme =>
   hour >= DAY_START && hour < DAY_END ? "light" : "dark";
 
 function readMode(): ThemeMode {

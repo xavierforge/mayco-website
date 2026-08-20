@@ -87,15 +87,14 @@ npm run lint
 ## 手繪逐格動畫（模擬 GIF 彩蛋）
 
 在拿到真的 GIF 素材之前，逐格彩蛋是用 CSS 模擬的：首頁標題輪盤（`useTitleRoulette.ts`）、
-公寓的開門／敲門／探頭（`index.css` 的 `.apt-*`），以及目前沒掛在頁面上的
-兩側偶發探頭動物（`Critters.tsx`）與角落搖搖裝飾（`Shakers.tsx`，見「已知小問題」）。
+公寓的開門／敲門／探頭（`index.css` 的 `.apt-*`）。
 
 keyframes 都寫在 `src/index.css`，**一律用 `animation-timing-function: steps(1, end)`**，
 每個 cycle 切 3~4 格、約 3~6fps。GIF 的味道來自低幀率逐格跳動，
 **不要改成 `ease` / `linear`**，一改就變平滑補間，手繪感會整個消失。
 （build 後在 CSS 裡會看到 `step-end`，那是 `steps(1, end)` 的等價寫法，正常。）
 
-`prefers-reduced-motion: reduce` 時這些會全部停用，探頭動物連生成都不會跑。
+`prefers-reduced-motion: reduce` 時這些會全部停用。
 
 ## 待補的真實資料
 
@@ -106,7 +105,6 @@ keyframes 都寫在 `src/index.css`，**一律用 `animation-timing-function: st
 | --- | --- |
 | `src/data/characters.ts` | 真實角色設定；把 `img` 填上去背 PNG 路徑（放 `public/characters/`），並依圖片調整 `aspect` 與 `scale`，emoji 佔位就會自動被取代。一個角色只需要一張去背 PNG（短邊 512px 以上、去背後貼齊裁切），公寓門口與角色卡共用同一張 |
 | `src/data/apartment.ts` | 公寓的門牌、個性標籤與敲門台詞；哪一戶住誰也在這裡（`characterId`） |
-| `src/data/critters.ts` | 探頭動物小動畫（對應 critters 資料）；把 `img` 填上去背 PNG 或 GIF 路徑，emoji 佔位就會自動被取代 |
 | `src/data/story.ts` | 真實的創作歷程 |
 | `src/data/history.ts` | 真實的品牌大事紀與年份 |
 | `src/data/products.ts` | 真實商品資料，以及 `shipping.ctaUrl`（實際的 7-11 賣貨便賣場連結，目前暫指向 portaly 總入口） |
@@ -116,9 +114,5 @@ keyframes 都寫在 `src/index.css`，**一律用 `animation-timing-function: st
 ## 已知小問題
 
 - 390px 等窄視窗下，首頁的像素標題圖（canvas 產生、寬度固定）會超出畫面被裁切；修法方向是窄視窗時把 pixelate 的放大倍率降一級
-- `Critters.tsx`（兩側探頭動物）、`Shakers.tsx`（角落搖搖裝飾）與 `src/data/critters.ts`、
-  `site.ts` 的 `heroDecorations` 在首頁換成公寓後沒有頁面在用了。
-  留著是因為拿到真的 GIF 素材時還會用上（公寓的「隨機開門」就是同一個彩蛋的 8-bit 版本），
-  確定不要的話這幾個檔案跟 `index.css` 裡對應的 keyframes 可以一起拿掉
 - `characters.ts` 有六隻動物，公寓只有五間住戶房（第六戶是頂樓工作室），
   目前「啾啾」沒有分配到房間，換人請改 `src/data/apartment.ts` 的 `characterId`
